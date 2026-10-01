@@ -24,6 +24,7 @@ import FilterScreen from '../screens/explore/FilterScreen';
 const Stack = createNativeStackNavigator();
 const { colors, typography } = THEME;
 
+
 const screenOptions = {
   headerStyle: {
     backgroundColor: colors.background,

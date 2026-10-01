@@ -1,57 +1,67 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { APP_NAME, AUTH_TAGLINE } from '../../constants/appConstants';
 import { THEME } from '../../constants/theme';
-import { APP_NAME, APP_TAGLINE } from '../../constants/appConstants';
-import { ScreenContainer } from '../../components/common';
-import { PrimaryButton } from '../../components/buttons';
+import { SafeAreaView, ErrorState } from '../../components/common';
 
 const { colors, typography, spacing } = THEME;
 
-const SplashScreen = ({ navigation }) => {
-  return (
-    <ScreenContainer edges={['top', 'bottom']}>
-      <View style={styles.content}>
-        <Text style={styles.brand} accessibilityRole="header">
-          {APP_NAME}
-        </Text>
-        <Text style={styles.tagline}>{APP_TAGLINE}</Text>
-        <Text style={styles.hint}>Splash · Phase 1 placeholder</Text>
+const SplashScreen = ({ sessionError, onRetry }) => {
+  const started = useRef(false);
 
-        <PrimaryButton
-          title="Continue"
-          onPress={() => navigation?.navigate?.('Login')}
-          style={styles.cta}
+  useEffect(() => {
+    if (started.current || sessionError) return;
+    started.current = true;
+    onRetry?.();
+  }, [onRetry, sessionError]);
+
+  if (sessionError) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <ErrorState
+          title="Unable to connect"
+          message="Please check your internet connection and try again."
+          actionLabel="Try Again"
+          onActionPress={onRetry}
         />
-      </View>
-    </ScreenContainer>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <Text style={styles.brand} accessibilityRole="header">{APP_NAME.toUpperCase()}</Text>
+      <Text style={styles.tagline}>{AUTH_TAGLINE}</Text>
+      <ActivityIndicator
+        style={styles.spinner}
+        size="large"
+        color={colors.primary}
+        accessibilityLabel="Checking your session"
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
   brand: {
     ...typography.display,
     color: colors.primary,
-    marginBottom: spacing.sm,
+    letterSpacing: 3,
+    marginBottom: spacing.md,
   },
   tagline: {
     ...typography.bodyLarge,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.xxl,
   },
-  hint: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginBottom: spacing.xxxl,
-  },
-  cta: {
-    maxWidth: 280,
-    alignSelf: 'stretch',
+  spinner: {
+    marginTop: spacing.xxxl,
   },
 });
 

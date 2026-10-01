@@ -8,7 +8,17 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 
-app.use(cors({ origin: [env.CLIENT_URL, env.ADMIN_URL].filter(Boolean) }));
+const allowedOrigins = [env.CLIENT_URL, env.ADMIN_URL].filter(Boolean);
+
+app.set('trust proxy', 1);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+}));
 app.use(express.json());
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 

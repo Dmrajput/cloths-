@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
 import { ScreenContainer, AppHeader, Avatar, Divider } from '../../components/common';
 import { OutlineButton, TextButton } from '../../components/buttons';
 import { SectionCard } from '../../components/cards';
+import { useAuth } from '../../hooks/useAuth';
+import { formatIndianPhone } from '../../utils/validation';
 
 const { colors, typography, spacing } = THEME;
 
@@ -16,6 +19,17 @@ const PROFILE_LINKS = [
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const { user, logout } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const onSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await logout();
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   return (
     <ScreenContainer scroll padded={false} edges={['top']}>
@@ -23,9 +37,9 @@ const ProfileScreen = () => {
 
       <View style={styles.content}>
         <View style={styles.hero}>
-          <Avatar name="Pehenlo User" size={72} />
-          <Text style={styles.heading}>Profile</Text>
-          <Text style={styles.body}>Your profile</Text>
+          <Avatar name={user?.name || 'Pehenlo User'} size={72} />
+          <Text style={styles.heading}>{user?.name || 'Profile'}</Text>
+          <Text style={styles.body}>{user?.phone ? formatIndianPhone(user.phone) : 'Your profile'}</Text>
         </View>
 
         <SectionCard title="Account" style={styles.card}>
@@ -43,9 +57,10 @@ const ProfileScreen = () => {
         </SectionCard>
 
         <OutlineButton
-          title="Sign Out"
-          onPress={() => {}}
-          disabled
+          title={signingOut ? 'Signing out...' : 'Sign Out'}
+          onPress={onSignOut}
+          disabled={signingOut}
+          accessibilityLabel="Sign out"
           style={styles.signOut}
         />
       </View>

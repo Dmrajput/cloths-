@@ -1,34 +1,54 @@
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { THEME } from '../constants/theme';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import SplashScreen from '../screens/auth/SplashScreen';
+import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
+
+const ProfileStack = createNativeStackNavigator();
+const { colors } = THEME;
 
 const navTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: THEME.colors.background,
+    background: colors.background,
     card: THEME.colors.surface,
     text: THEME.colors.textPrimary,
     border: THEME.colors.border,
-    primary: THEME.colors.primary,
+    primary: colors.primary,
   },
 };
 
-/**
- * RootNavigator
- * ├── AuthNavigator  (when not authenticated)
- * └── MainNavigator  (when authenticated)
- *
- * Phase 1 uses DEV_SHOW_MAIN_APP in AuthContext so MainNavigator is visible.
- */
-export default function RootNavigator() {
-  const { isAuthenticated } = useAuth();
-
+function ProfileSetupNavigator() {
   return (
-    <NavigationContainer theme={navTheme}>
-      {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
-    </NavigationContainer>
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <ProfileStack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+    </ProfileStack.Navigator>
   );
+}
+
+export default function RootNavigator() {
+  const { isAuthenticated, isLoading, user, sessionError, refreshSession } = useAuth();
+  const needsProfile = isAuthenticated && user && !user.isProfileCompleted;
+
+  if (isLoading || sessionError) {
+    return <SplashScreen sessionError={sessionError} onRetry={refreshSession} />;
+  }
+
+  let navigator = <AuthNavigator />;
+  if (needsProfile) {
+    navigator = <ProfileSetupNavigator />;
+  } else if (isAuthenticated) {
+    navigator = <MainNavigator />;
+  }
+
+  return <NavigationContainer theme={navTheme}>{navigator}</NavigationContainer>;
 }

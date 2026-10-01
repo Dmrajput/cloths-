@@ -6,8 +6,12 @@ const successResponse = (res, data = null, message = 'Success', statusCode = 200
   return res.status(statusCode).json(payload);
 };
 
-const errorResponse = (res, message = 'Something went wrong', statusCode = 500) => {
-  return res.status(statusCode).json({ success: false, message });
+const errorResponse = (res, message = 'Something went wrong', statusCode = 500, code) => {
+  const payload = { success: false, message };
+  if (code) {
+    payload.code = code;
+  }
+  return res.status(statusCode).json(payload);
 };
 
 module.exports = { successResponse, errorResponse };

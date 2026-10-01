@@ -7,6 +7,7 @@ module.exports = {
     FORBIDDEN: 403,
     NOT_FOUND: 404,
     CONFLICT: 409,
+    TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500,
   },
   MESSAGES: {
@@ -16,5 +17,16 @@ module.exports = {
     NOT_FOUND: 'Resource not found',
     VALIDATION_ERROR: 'Validation failed',
     SERVER_ERROR: 'Internal server error',
+  },
+  PHONE: {
+    country: 'IN',
+    dialCode: '+91',
+    countryDigits: 2,
+    countryDigitsCode: '91',
+    nationalLength: 10,
+    nationalPattern: /^[6-9]\d{9}$/,
+  },
+  OTP_PURPOSE: {
+    LOGIN: 'login',
   },
 };

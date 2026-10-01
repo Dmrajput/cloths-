@@ -1,50 +1,107 @@
-import { useMemo, useState, createContext, useContext } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext } from 'react';
+import { authService } from '../services/authService';
+import { setAuthToken, setUnauthorizedHandler } from '../services/api';
+import { clearAccessToken, readAccessToken, saveAccessToken } from '../services/tokenStorage';
 
 export const AuthContext = createContext(null);
 
-/**
- * Phase 1: temporary development flag shows MainNavigator.
- * Phase 2 will replace this with real authentication.
- */
-const DEV_SHOW_MAIN_APP = true;
-
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(DEV_SHOW_MAIN_APP);
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sessionError, setSessionError] = useState(null);
 
-  const login = async () => {
-    // Phase 2: real auth
-    setIsAuthenticated(true);
-    return Promise.resolve({ success: true });
-  };
-
-  const logout = async () => {
-    setIsAuthenticated(false);
+  const clearSession = useCallback(async () => {
+    await clearAccessToken();
+    setAuthToken(null);
+    setToken(null);
     setUser(null);
-    return Promise.resolve({ success: true });
-  };
+    setIsAuthenticated(false);
+  }, []);
+
+  const refreshLock = useRef(null);
+
+  const refreshSession = useCallback(async () => {
+    if (refreshLock.current) {
+      return refreshLock.current;
+    }
+
+    refreshLock.current = (async () => {
+      setIsLoading(true);
+      setSessionError(null);
+
+      try {
+        const storedToken = await readAccessToken();
+        if (!storedToken) {
+          await clearSession();
+          return;
+        }
+
+        setAuthToken(storedToken);
+        setToken(storedToken);
+        const response = await authService.getCurrentUser();
+        setUser(response?.data?.user || null);
+        setIsAuthenticated(Boolean(response?.data?.user));
+      } catch (error) {
+        if (error?.code === 'NETWORK_ERROR') {
+          setSessionError(error);
+          return;
+        }
+        await clearSession();
+      } finally {
+        setIsLoading(false);
+      }
+    })().finally(() => {
+      refreshLock.current = null;
+    });
+
+    return refreshLock.current;
+  }, [clearSession]);
+
+  const establishSession = useCallback(async (nextToken, nextUser) => {
+    await saveAccessToken(nextToken);
+    setAuthToken(nextToken);
+    setToken(nextToken);
+    setUser(nextUser);
+    setIsAuthenticated(true);
+    setSessionError(null);
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      if (token) {
+        await authService.logout();
+      }
+    } catch (_error) {
+      // Client token removal is the source of truth for stateless JWT logout.
+    }
+    await clearSession();
+  }, [clearSession, token]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearSession();
+    });
+  }, [clearSession]);
 
   const value = useMemo(
     () => ({
-      isAuthenticated,
       user,
-      login,
+      token,
+      isAuthenticated,
+      isLoading,
+      sessionError,
+      login: establishSession,
       logout,
-      setIsAuthenticated,
+      refreshSession,
       setUser,
     }),
-    [isAuthenticated, user]
+    [user, token, isAuthenticated, isLoading, sessionError, establishSession, logout, refreshSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuthContext() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within AuthProvider');
-  }
-  return context;
 }
 
 export default AuthContext;

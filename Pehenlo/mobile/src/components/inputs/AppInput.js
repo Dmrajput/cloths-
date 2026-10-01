@@ -17,6 +17,9 @@ const AppInput = ({
   onRightIconPress,
   secureTextEntry = false,
   keyboardType = 'default',
+  maxLength,
+  autoCapitalize = 'sentences',
+  autoCorrect = true,
   style,
 }) => {
   const [focused, setFocused] = useState(false);
@@ -54,6 +57,9 @@ const AppInput = ({
           placeholderTextColor={colors.textMuted}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
+          maxLength={maxLength}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
           editable={!disabled}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
