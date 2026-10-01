@@ -1,5 +1,15 @@
+import { api } from './api';
+
 export const userService = {
-  getProfile: async () => Promise.resolve({ success: true }),
-  updateProfile: async () => Promise.resolve({ success: true }),
+  getProfile() {
+    return api.get('/users/me');
+  },
+
+  updateProfile(data) {
+    return api.put('/users/profile', data);
+  },
+
   getWishlist: async () => Promise.resolve({ success: true }),
 };
+
+export default userService;
