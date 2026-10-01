@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
 import { ScreenContainer, AppHeader } from '../../components/common';
 
@@ -7,6 +7,8 @@ const { colors, typography, spacing } = THEME;
 
 const Screen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const checking = route.params?.intent === 'check';
 
   return (
     <ScreenContainer scroll padded={false} edges={['top']}>
@@ -15,9 +17,12 @@ const Screen = () => {
         showBack
         onBack={() => navigation.goBack()}
       />
-      <Text style={styles.title}>Availability</Text>
-      <Text style={styles.subtitle}>Manage when your outfit can be rented.</Text>
-      <Text style={styles.hint}>Pehenlo · Phase 1 placeholder</Text>
+      <Text style={styles.title}>{checking ? 'Check availability' : 'Availability'}</Text>
+      <Text style={styles.subtitle}>
+        {checking
+          ? 'Availability booking will be available in the next step.'
+          : 'Manage when your outfit can be rented.'}
+      </Text>
     </ScreenContainer>
   );
 };
@@ -34,11 +39,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
-  },
-  hint: {
-    ...typography.caption,
-    color: colors.textMuted,
-    paddingHorizontal: spacing.lg,
   },
 });
 

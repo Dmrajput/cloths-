@@ -1,7 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useFocusEffect } from '@react-navigation/native';
 import { THEME } from '../constants/theme';
+import { bookingService } from '../services/bookingService';
 import HomeScreen from '../screens/home/HomeScreen';
 import ExploreScreen from '../screens/explore/ExploreScreen';
 import ListOutfitScreen from '../screens/listing/ListOutfitScreen';
@@ -43,6 +46,20 @@ function TabBarIcon({ routeName, focused, color, size }) {
 }
 
 export default function BottomTabNavigator() {
+  const [actionable, setActionable] = useState(0);
+  const loadCounts = useCallback(async () => {
+    try {
+      const response = await bookingService.getRentalCounts();
+      setActionable(Number(response?.data?.actionable) || 0);
+    } catch (_error) {
+      setActionable(0);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    loadCounts();
+  }, [loadCounts]));
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -87,9 +104,12 @@ export default function BottomTabNavigator() {
         name="MyRentals"
         component={MyRentalsScreen}
         options={{
-          tabBarLabel: 'Rentals',
+          tabBarLabel: 'My Rentals',
           tabBarAccessibilityLabel: 'My Rentals',
+          tabBarBadge: actionable > 0 ? actionable : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.primary },
         }}
+        listeners={{ focus: loadCounts }}
       />
       <Tab.Screen
         name="Profile"

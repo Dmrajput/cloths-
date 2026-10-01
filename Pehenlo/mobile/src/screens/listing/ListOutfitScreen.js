@@ -1,54 +1,86 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
-import { ScreenContainer, AppHeader } from '../../components/common';
-import { PrimaryButton, OutlineButton } from '../../components/buttons';
-import { SectionCard } from '../../components/cards';
+import { ScreenContainer } from '../../components/common';
+import { OutlineButton, PrimaryButton } from '../../components/buttons';
+import { useListingDraft } from '../../context/ListingDraftContext';
+import { draftProgress, firstIncompleteRoute } from '../../utils/listingHelpers';
 
 const { colors, typography, spacing, radius } = THEME;
 
 const ListOutfitScreen = () => {
+  const navigation = useNavigation();
+  const { drafts, startNewDraft, continueDraft } = useListingDraft();
+  const saved = drafts.filter((draft) => draft.title || draft.photos?.length || draft.id);
+
+  const openNew = async () => {
+    const begin = async () => {
+      await startNewDraft();
+      navigation.navigate('ListingPhotos');
+    };
+    if (!saved.length) {
+      await begin();
+      return;
+    }
+    Alert.alert(
+      'Start a new listing?',
+      'Your current draft will remain saved.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Start New', onPress: begin },
+      ]
+    );
+  };
+
+  const openDraft = async (draft) => {
+    await continueDraft(draft);
+    navigation.navigate(firstIncompleteRoute(draft));
+  };
+
   return (
-    <ScreenContainer scroll padded={false} edges={['top']}>
-      <AppHeader title="List Outfit" />
-
-      <View style={styles.content}>
-        <View style={styles.heroIcon} accessibilityRole="image">
-          <Ionicons name="shirt-outline" size={40} color={colors.primary} />
-        </View>
-
-        <Text style={styles.heading}>List Outfit</Text>
-        <Text style={styles.body}>
-          List your traditional outfit and earn from it.
-        </Text>
-
-        <SectionCard style={styles.card}>
-          <Text style={styles.cardTitle}>Coming in a later phase</Text>
-          <Text style={styles.cardBody}>
-            Photo upload, pricing, availability, and listing details will live here.
-            For now, this screen shows the Pehenlo design foundation.
-          </Text>
-        </SectionCard>
-
-        <PrimaryButton title="Start Listing" onPress={() => {}} disabled />
-        <OutlineButton
-          title="View My Listings"
-          onPress={() => {}}
-          style={styles.secondary}
-          disabled
-        />
+    <ScreenContainer scroll edges={['top']}>
+      <View style={styles.hero}>
+        <Ionicons name="shirt-outline" size={36} color={colors.primary} />
       </View>
+      <Text style={styles.title}>List your outfit</Text>
+      <Text style={styles.body}>
+        Add photos, price, and pickup details. Pehenlo reviews the listing before it appears in Explore.
+      </Text>
+      <PrimaryButton title="Start Listing" onPress={openNew} accessibilityLabel="Start listing" />
+
+      {saved.length ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Continue a draft</Text>
+          {saved.map((draft) => (
+            <Pressable
+              key={draft.localId}
+              onPress={() => openDraft(draft)}
+              accessibilityRole="button"
+              accessibilityLabel={`Continue draft ${draft.title || 'Untitled listing'}`}
+              style={styles.draft}
+            >
+              <View style={styles.draftCopy}>
+                <Text style={styles.draftTitle}>{draft.title || 'Untitled listing'}</Text>
+                <Text style={styles.draftMeta}>{draftProgress(draft)}% complete · {draft.status === 'REJECTED' ? 'Needs changes' : 'Draft'}</Text>
+              </View>
+              <Text style={styles.continue}>Continue</Text>
+            </Pressable>
+          ))}
+          <OutlineButton
+            title="Start New"
+            onPress={openNew}
+            style={styles.secondary}
+            accessibilityLabel="Start a new listing"
+          />
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxxl,
-    alignItems: 'stretch',
-  },
-  heroIcon: {
+  hero: {
     width: 72,
     height: 72,
     borderRadius: radius.round,
@@ -59,29 +91,50 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
   },
-  heading: {
+  title: {
     ...typography.h1,
     color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: spacing.sm,
   },
   body: {
     ...typography.bodyLarge,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.xxl,
-  },
-  card: {
+    marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
-  cardTitle: {
-    ...typography.label,
-    color: colors.secondary,
-    marginBottom: spacing.sm,
+  section: {
+    marginTop: spacing.xl,
   },
-  cardBody: {
-    ...typography.body,
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  draft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    minHeight: 72,
+  },
+  draftCopy: {
+    flex: 1,
+  },
+  draftTitle: {
+    ...typography.label,
+    color: colors.textPrimary,
+  },
+  draftMeta: {
+    ...typography.bodySmall,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  continue: {
+    ...typography.label,
+    color: colors.primary,
   },
   secondary: {
     marginTop: spacing.md,

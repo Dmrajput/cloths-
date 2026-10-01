@@ -133,10 +133,11 @@ const AppHeader = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 56,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.background,
   },
   side: {

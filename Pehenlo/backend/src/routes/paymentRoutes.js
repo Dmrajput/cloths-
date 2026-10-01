@@ -1,11 +1,12 @@
 const express = require('express');
-const paymentController = require('../controllers/paymentController');
 const authMiddleware = require('../middleware/authMiddleware');
+const paymentController = require('../controllers/paymentController');
 
 const router = express.Router();
 
-router.post('/', authMiddleware, paymentController.createPayment);
+router.post('/webhook', paymentController.webhook);
+router.post('/create-order', authMiddleware, paymentController.createOrder);
 router.post('/verify', authMiddleware, paymentController.verifyPayment);
-router.get('/history', authMiddleware, paymentController.getPaymentHistory);
+router.get('/booking/:bookingId', authMiddleware, paymentController.getBookingPayment);
 
 module.exports = router;

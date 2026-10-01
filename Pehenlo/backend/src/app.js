@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -19,7 +20,13 @@ app.use(cors({
     return callback(null, false);
   },
 }));
-app.use(express.json());
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  },
+}));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.get('/health', (_req, res) => {

@@ -1,4 +1,15 @@
+import { api } from './api';
+
 export const paymentService = {
-  initiatePayment: async () => Promise.resolve({ success: true }),
-  verifyPayment: async () => Promise.resolve({ success: true }),
+  createPaymentOrder(bookingId) {
+    return api.post('/payments/create-order', { bookingId });
+  },
+
+  verifyPayment(body) {
+    return api.post('/payments/verify', body);
+  },
+
+  getBookingPaymentStatus(bookingId) {
+    return api.get(`/payments/booking/${bookingId}`);
+  },
 };

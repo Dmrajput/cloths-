@@ -1,3 +1,4 @@
+import { memo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../../constants/theme';
@@ -14,11 +15,15 @@ const OutfitCard = ({
   duration,
   rating,
   distance,
+  location,
   isFavorite = false,
   onPress,
   onFavoritePress,
   style,
 }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(image) && !imageFailed;
+
   return (
     <Pressable
       onPress={onPress}
@@ -31,8 +36,13 @@ const OutfitCard = ({
       ]}
     >
       <View style={styles.imageContainer}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+        {showImage ? (
+          <Image
+            source={{ uri: image }}
+            style={styles.image}
+            resizeMode="cover"
+            onError={() => setImageFailed(true)}
+          />
         ) : (
           <View style={styles.imagePlaceholder}>
             <Ionicons name="shirt-outline" size={36} color={colors.textMuted} />
@@ -67,6 +77,12 @@ const OutfitCard = ({
 
         {price != null ? (
           <PriceText price={price} duration={duration} style={styles.price} />
+        ) : null}
+        {location ? (
+          <View style={styles.distanceRow}>
+            <Ionicons name="location-outline" size={13} color={colors.textMuted} />
+            <Text style={styles.distance} numberOfLines={1}>{location}</Text>
+          </View>
         ) : null}
       </View>
     </Pressable>
@@ -132,4 +148,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OutfitCard;
+export default memo(OutfitCard);

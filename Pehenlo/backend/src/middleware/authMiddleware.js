@@ -39,4 +39,23 @@ const authMiddleware = async (req, _res, next) => {
   }
 };
 
+const optionalAuth = async (req, _res, next) => {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    const user = await User.findById(decoded.sub);
+    if (user && user.isActive) {
+      req.user = user;
+    }
+  } catch (_error) {
+    // A public listing request should not fail just because a stale token was sent.
+  }
+
+  return next();
+};
+
 module.exports = authMiddleware;
+module.exports.optionalAuth = optionalAuth;

@@ -86,6 +86,8 @@ export async function apiRequest(method, endpoint, body, options = {}) {
       const error = new Error(payload?.message || 'Something went wrong. Please try again.');
       error.code = payload?.code || 'SERVER_ERROR';
       error.status = response.status;
+      error.errors = payload?.errors || null;
+      error.data = payload?.data || null;
 
       if (
         !options.skipAuthHandler

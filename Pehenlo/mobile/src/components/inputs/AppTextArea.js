@@ -12,6 +12,7 @@ const AppTextArea = ({
   error,
   disabled = false,
   numberOfLines = 4,
+  maxLength,
   style,
 }) => {
   const [focused, setFocused] = useState(false);
@@ -35,6 +36,7 @@ const AppTextArea = ({
         numberOfLines={numberOfLines}
         textAlignVertical="top"
         editable={!disabled}
+        maxLength={maxLength}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={[

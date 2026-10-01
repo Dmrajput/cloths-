@@ -1,49 +1,63 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
-import { ScreenContainer, AppHeader, EmptyState } from '../../components/common';
+import { EMPTY_RENTALS, PERSPECTIVE_TABS, RENTER_TABS } from '../../constants/rentalConstants';
+import { ScreenContainer, AppHeader } from '../../components/common';
+import RentalTabs from '../../components/rentals/RentalTabs';
+import RentalList from '../../components/rentals/RentalList';
+import MyOutfitRentalsScreen from './MyOutfitRentalsScreen';
+import PrimaryButton from '../../components/buttons/PrimaryButton';
+import { canPayBooking } from '../../utils/rentalHelpers';
 
-const { colors, typography, spacing } = THEME;
+const { spacing } = THEME;
 
 const MyRentalsScreen = () => {
   const navigation = useNavigation();
+  const [perspective, setPerspective] = useState('renter');
+  const [group, setGroup] = useState('upcoming');
+  const empty = EMPTY_RENTALS.renter[group];
+
+  const changePerspective = (next) => {
+    setPerspective(next);
+    setGroup(next === 'owner' ? 'requests' : 'upcoming');
+  };
 
   return (
-    <ScreenContainer scroll padded={false} edges={['top']}>
-      <AppHeader title="My Rentals" />
-
-      <View style={styles.content}>
-        <Text style={styles.heading}>My Rentals</Text>
-        <Text style={styles.body}>Your rentals will appear here.</Text>
-
-        <EmptyState
-          icon="cube-outline"
-          title="No rentals yet"
-          message="Start exploring traditional outfits on Pehenlo."
-          actionLabel="Explore Outfits"
-          onActionPress={() => navigation.navigate('Explore')}
-        />
-      </View>
+    <ScreenContainer scroll={false} padded={false} edges={['top']}>
+      <AppHeader title="My Rentals" subtitle="Manage your outfit bookings" />
+      <RentalTabs tabs={PERSPECTIVE_TABS} value={perspective} onChange={changePerspective} />
+      {perspective === 'owner' ? <MyOutfitRentalsScreen /> : (
+        <View style={styles.panel}>
+          <RentalTabs tabs={RENTER_TABS} value={group} onChange={setGroup} />
+          <RentalList
+            role="renter"
+            group={group}
+            empty={{
+              ...empty,
+              onAction: () => navigation.navigate('Explore'),
+            }}
+            onOpen={(item) => navigation.navigate('BookingDetails', { bookingId: item.id })}
+            renderFooter={(item) => (
+              canPayBooking(item) ? (
+                <PrimaryButton
+                  title="Pay Now"
+                  onPress={() => navigation.navigate('Payment', { bookingId: item.id })}
+                  accessibilityLabel="Pay now"
+                  style={styles.pay}
+                />
+              ) : null
+            )}
+          />
+        </View>
+      )}
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxxl,
-    flexGrow: 1,
-  },
-  heading: {
-    ...typography.h2,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  body: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginBottom: spacing.xxl,
-  },
+  panel: { flex: 1 },
+  pay: { marginTop: spacing.sm },
 });
 
 export default MyRentalsScreen;

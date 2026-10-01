@@ -14,6 +14,12 @@ const errorMiddleware = (err, _req, res, _next) => {
     code = 'PROFILE_VALIDATION_ERROR';
   }
 
+  if (err.name === 'MulterError') {
+    statusCode = HTTP_STATUS.BAD_REQUEST;
+    message = 'Image is too large. Please use a photo under 5 MB.';
+    code = 'IMAGE_TOO_LARGE';
+  }
+
   if (err.code === 11000) {
     statusCode = HTTP_STATUS.CONFLICT;
     message = 'An account with this phone already exists';
@@ -29,7 +35,7 @@ const errorMiddleware = (err, _req, res, _next) => {
     code = 'SERVER_ERROR';
   }
 
-  return errorResponse(res, message, statusCode, code);
+  return errorResponse(res, message, statusCode, code, err.errors, statusCode >= 500 ? null : err.data);
 };
 
 module.exports = errorMiddleware;

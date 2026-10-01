@@ -1,8 +1,21 @@
+const Category = require('../models/Category');
+const AppError = require('../utils/AppError');
 const { successResponse } = require('../utils/response');
-const { MESSAGES } = require('../utils/constants');
+const { toPublicCategory } = require('../utils/catalogPresenter');
+const { HTTP_STATUS } = require('../utils/constants');
 
-const getCategories = (_req, res) => successResponse(res, null, MESSAGES.NOT_IMPLEMENTED);
-const createCategory = (_req, res) => successResponse(res, null, MESSAGES.NOT_IMPLEMENTED);
-const getCategoryById = (_req, res) => successResponse(res, null, MESSAGES.NOT_IMPLEMENTED);
+const getCategories = async (req, res, next) => {
+  try {
+    const activeOnly = req.query.active !== 'false';
+    const filter = activeOnly ? { isActive: true } : {};
+    const categories = await Category.find(filter).sort({ sortOrder: 1, name: 1 });
 
-module.exports = { getCategories, createCategory, getCategoryById };
+    return successResponse(res, {
+      categories: categories.map(toPublicCategory),
+    }, 'Categories');
+  } catch (error) {
+    return next(new AppError('Unable to load categories', HTTP_STATUS.INTERNAL_SERVER_ERROR, 'CATEGORIES_FETCH_FAILED'));
+  }
+};
+
+module.exports = { getCategories };

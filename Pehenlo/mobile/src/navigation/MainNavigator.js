@@ -4,10 +4,13 @@ import BottomTabNavigator from './BottomTabNavigator';
 import OutfitDetailsScreen from '../screens/listing/OutfitDetailsScreen';
 import EditOutfitScreen from '../screens/listing/EditOutfitScreen';
 import MyListingsScreen from '../screens/listing/MyListingsScreen';
-import AvailabilityScreen from '../screens/listing/AvailabilityScreen';
-import BookingDetailsScreen from '../screens/rentals/BookingDetailsScreen';
+import AvailabilityScreen from '../screens/booking/AvailabilityScreen';
+import CreateBookingScreen from '../screens/booking/CreateBookingScreen';
+import BookingDetailsScreen from '../screens/booking/BookingDetailsScreen';
+import OwnerBookingRequestsScreen from '../screens/booking/OwnerBookingRequestsScreen';
 import CheckoutScreen from '../screens/rentals/CheckoutScreen';
-import PaymentScreen from '../screens/rentals/PaymentScreen';
+import PaymentScreen from '../screens/payment/PaymentScreen';
+import PaymentResultScreen from '../screens/payment/PaymentResultScreen';
 import EarningsScreen from '../screens/earnings/EarningsScreen';
 import TransactionHistoryScreen from '../screens/earnings/TransactionHistoryScreen';
 import PayoutScreen from '../screens/earnings/PayoutScreen';
@@ -20,6 +23,14 @@ import NotificationSettingsScreen from '../screens/profile/NotificationSettingsS
 import HelpSupportScreen from '../screens/profile/HelpSupportScreen';
 import SearchScreen from '../screens/explore/SearchScreen';
 import FilterScreen from '../screens/explore/FilterScreen';
+import ListingPhotosScreen from '../screens/listing/ListingPhotosScreen';
+import ListingDetailsScreen from '../screens/listing/ListingDetailsScreen';
+import ListingMeasurementsScreen from '../screens/listing/ListingMeasurementsScreen';
+import ListingPricingScreen from '../screens/listing/ListingPricingScreen';
+import ListingAvailabilityScreen from '../screens/listing/ListingAvailabilityScreen';
+import ListingDeliveryScreen from '../screens/listing/ListingDeliveryScreen';
+import ListingReviewScreen from '../screens/listing/ListingReviewScreen';
+import ListingSuccessScreen from '../screens/listing/ListingSuccessScreen';
 
 const Stack = createNativeStackNavigator();
 const { colors, typography } = THEME;
@@ -48,6 +59,14 @@ export default function MainNavigator() {
         component={BottomTabNavigator}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="ListingPhotos" component={ListingPhotosScreen} options={{ title: 'Photos' }} />
+      <Stack.Screen name="ListingDetails" component={ListingDetailsScreen} options={{ title: 'Details' }} />
+      <Stack.Screen name="ListingMeasurements" component={ListingMeasurementsScreen} options={{ title: 'Condition' }} />
+      <Stack.Screen name="ListingPricing" component={ListingPricingScreen} options={{ title: 'Pricing' }} />
+      <Stack.Screen name="ListingAvailability" component={ListingAvailabilityScreen} options={{ title: 'Availability' }} />
+      <Stack.Screen name="ListingDelivery" component={ListingDeliveryScreen} options={{ title: 'Delivery' }} />
+      <Stack.Screen name="ListingReview" component={ListingReviewScreen} options={{ title: 'Review' }} />
+      <Stack.Screen name="ListingSuccess" component={ListingSuccessScreen} options={{ title: 'Submitted', headerBackVisible: false }} />
       <Stack.Screen
         name="OutfitDetails"
         component={OutfitDetailsScreen}
@@ -66,12 +85,22 @@ export default function MainNavigator() {
       <Stack.Screen
         name="Availability"
         component={AvailabilityScreen}
-        options={{ title: 'Availability' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateBooking"
+        component={CreateBookingScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="BookingDetails"
         component={BookingDetailsScreen}
-        options={{ title: 'Booking Details' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="OwnerBookingRequests"
+        component={OwnerBookingRequestsScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Checkout"
@@ -81,7 +110,12 @@ export default function MainNavigator() {
       <Stack.Screen
         name="Payment"
         component={PaymentScreen}
-        options={{ title: 'Payment' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PaymentResult"
+        component={PaymentResultScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Earnings"

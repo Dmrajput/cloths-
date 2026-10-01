@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
+import { ListingDraftProvider } from './src/context/ListingDraftContext';
 import { UserProvider } from './src/context/UserContext';
 import { AppProvider } from './src/context/AppContext';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -12,10 +13,12 @@ export default function App() {
     <SafeAreaProvider style={styles.root}>
       <AuthProvider>
         <UserProvider>
-          <AppProvider>
-            <StatusBar style="dark" backgroundColor={THEME.colors.background} />
-            <RootNavigator />
-          </AppProvider>
+          <ListingDraftProvider>
+            <AppProvider>
+              <StatusBar style="dark" backgroundColor={THEME.colors.background} />
+              <RootNavigator />
+            </AppProvider>
+          </ListingDraftProvider>
         </UserProvider>
       </AuthProvider>
     </SafeAreaProvider>

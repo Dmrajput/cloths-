@@ -1,124 +1,334 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
-import { APP_NAME, APP_TAGLINE, DEFAULT_LOCATION, CATEGORIES } from '../../constants/appConstants';
-import { ScreenContainer, AppHeader, Divider } from '../../components/common';
-import { PrimaryButton } from '../../components/buttons';
-import { CategoryCard, OutfitCard, SectionCard } from '../../components/cards';
+import { HOME_HERO, OCCASIONS, WEDDING_COLLECTION } from '../../constants/occasions';
+import { ScreenContainer, AppHeader, ErrorState } from '../../components/common';
+import { TextButton } from '../../components/buttons';
+import { listingService } from '../../services/listingService';
+import { useAuth } from '../../hooks/useAuth';
+import { getAuthErrorMessage } from '../../utils/validation';
+import HeroBanner from '../../components/home/HeroBanner';
+import CategoryList from '../../components/home/CategoryList';
+import OccasionCard from '../../components/home/OccasionCard';
+import SectionHeader from '../../components/home/SectionHeader';
+import HorizontalListingSection from '../../components/home/HorizontalListingSection';
 
-const { colors, typography, spacing } = THEME;
+const { colors, typography, spacing, radius } = THEME;
 
-const SAMPLE_OUTFIT = {
-  title: 'Designer Lehenga',
-  price: '1,499',
-  duration: '2 days',
-  rating: 4.8,
-  distance: '2.4 km',
-  isFavorite: false,
-};
+const initialSection = { loading: true, error: '', items: [] };
+
+function firstName(name) {
+  const value = String(name || '').trim().split(/\s+/)[0];
+  return value || '';
+}
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
+  const city = user?.city?.trim() || '';
+  const [categories, setCategories] = useState(initialSection);
+  const [featured, setFeatured] = useState(initialSection);
+  const [trending, setTrending] = useState(initialSection);
+  const [nearby, setNearby] = useState(initialSection);
+  const [recent, setRecent] = useState(initialSection);
+  const [refreshing, setRefreshing] = useState(false);
+  const [favorites, setFavorites] = useState({});
+
+  const loadSection = useCallback(async (setter, request) => {
+    setter((current) => ({ ...current, loading: current.items.length === 0, error: '' }));
+    try {
+      const response = await request();
+      const items = response?.data?.categories || response?.data?.listings || [];
+      setter({ loading: false, error: '', items });
+    } catch (error) {
+      setter((current) => ({
+        ...current,
+        loading: false,
+        error: getAuthErrorMessage(error).includes('connect')
+          ? 'Couldn’t load this section. Check your connection.'
+          : 'Couldn’t load this section.',
+      }));
+    }
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    await Promise.all([
+      loadSection(setCategories, () => listingService.getCategories()),
+      loadSection(setFeatured, () => listingService.getFeaturedListings()),
+      loadSection(setTrending, () => listingService.getTrendingListings()),
+      city
+        ? loadSection(setNearby, () => listingService.getNearbyListings({ city }))
+        : Promise.resolve(setNearby({ loading: false, error: '', items: [] })),
+      loadSection(setRecent, () => listingService.getRecentListings()),
+    ]);
+  }, [city, loadSection]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  const onRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await loadAll();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadAll, refreshing]);
+
+  const openExplore = (params = {}) => navigation.navigate('Explore', {
+    navToken: Date.now(),
+    focusSearch: Boolean(params.focusSearch),
+    category: params.category || null,
+    categoryName: params.categoryName || null,
+    occasion: params.occasion || null,
+    source: params.source || null,
+    city: params.city || null,
+    sort: params.sort || null,
+  }, { merge: false });
+  const openListing = (listing) => navigation.navigate('OutfitDetails', { listingId: listing.id });
+  const toggleFavorite = (id) => {
+    setFavorites((current) => ({ ...current, [id]: !current[id] }));
+  };
+
+  const sections = [
+    categories,
+    featured,
+    trending,
+    nearby,
+    recent,
+  ];
+  const allFailed = sections.every((section) => section.error) && sections.every((section) => !section.loading);
+  const anyLoading = sections.some((section) => section.loading);
+
+  const listingProps = {
+    onPressListing: openListing,
+    onFavoritePress: toggleFavorite,
+    isFavorite: (id) => Boolean(favorites[id]),
+  };
+
+  const header = (
+    <View>
+      <Text style={styles.greeting}>
+        {firstName(user?.name) ? `Hi, ${firstName(user?.name)}` : 'Hi there'} 👋
+      </Text>
+      <Text style={styles.subheading}>Find something beautiful{'\n'}for your next occasion.</Text>
+      <Pressable
+        onPress={() => openExplore({ focusSearch: true })}
+        accessibilityRole="button"
+        accessibilityLabel="Search outfits"
+        style={styles.search}
+      >
+        <Ionicons name="search" size={18} color={colors.textMuted} />
+        <Text style={styles.searchText}>Search lehenga, saree...</Text>
+      </Pressable>
+
+      {categories.loading ? (
+        <View style={styles.categorySkeletonRow}>
+          {[0, 1, 2, 3].map((item) => <View key={item} style={styles.categorySkeleton} />)}
+        </View>
+      ) : null}
+      {!categories.loading && categories.error ? (
+        <View style={styles.inlineError}>
+          <Text style={styles.inlineErrorText}>{categories.error}</Text>
+          <TextButton
+            title="Retry"
+            onPress={() => loadSection(setCategories, () => listingService.getCategories())}
+            accessibilityLabel="Retry categories"
+          />
+        </View>
+      ) : null}
+      {!categories.loading && !categories.error ? (
+        <CategoryList
+          categories={categories.items}
+          onPressCategory={(category) => openExplore({
+            category: category.slug,
+            categoryName: category.name,
+          })}
+          onSeeAll={() => openExplore({ source: 'categories' })}
+        />
+      ) : null}
+
+      <HeroBanner
+        title={HOME_HERO.title}
+        subtitle={HOME_HERO.subtitle}
+        buttonText={HOME_HERO.buttonText}
+        onPress={() => openExplore({ occasion: HOME_HERO.id })}
+      />
+
+      <HorizontalListingSection
+        title="Featured"
+        listings={featured.items}
+        loading={featured.loading}
+        error={featured.error}
+        emptyTitle="Featured outfits"
+        emptyMessage="New styles are coming soon. Explore all available outfits."
+        onRetry={() => loadSection(setFeatured, () => listingService.getFeaturedListings())}
+        onSeeAll={() => openExplore({ source: 'featured' })}
+        {...listingProps}
+      />
+      <HorizontalListingSection
+        title="Trending Near You"
+        listings={trending.items}
+        loading={trending.loading}
+        error={trending.error}
+        emptyTitle="Trending outfits"
+        emptyMessage="New styles are coming soon. Explore all available outfits."
+        onRetry={() => loadSection(setTrending, () => listingService.getTrendingListings())}
+        onSeeAll={() => openExplore({ source: 'trending' })}
+        {...listingProps}
+      />
+
+      <OccasionCard
+        variant="banner"
+        title={WEDDING_COLLECTION.title}
+        subtitle={WEDDING_COLLECTION.subtitle}
+        onPress={() => openExplore({ occasion: WEDDING_COLLECTION.id })}
+      />
+
+      <HorizontalListingSection
+        title="Available Near You"
+        listings={nearby.items}
+        loading={nearby.loading}
+        error={nearby.error}
+        emptyTitle={city ? 'No outfits available nearby yet.' : 'Select a city'}
+        emptyMessage={city
+          ? 'Try exploring other collections.'
+          : 'Add your city in profile to see outfits near you.'}
+        onRetry={city ? () => loadSection(setNearby, () => listingService.getNearbyListings({ city })) : undefined}
+        onSeeAll={() => openExplore({ source: 'nearby', city })}
+        {...listingProps}
+      />
+
+      <SectionHeader title="Shop by Occasion" />
+      <FlatList
+        horizontal
+        data={OCCASIONS}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+        style={styles.occasionList}
+        renderItem={({ item }) => (
+          <OccasionCard
+            title={item.name}
+            onPress={() => openExplore({ occasion: item.id })}
+          />
+        )}
+      />
+    </View>
+  );
+
+  if (allFailed && !anyLoading && !refreshing) {
+    return (
+      <ScreenContainer padded={false} edges={['top']}>
+        <AppHeader
+          location={city || 'Select Location'}
+          showNotification
+          onNotificationPress={() => {}}
+        />
+        <ErrorState
+          title="Unable to load Pehenlo"
+          message="Please check your connection and try again."
+          actionLabel="Retry"
+          onActionPress={loadAll}
+        />
+      </ScreenContainer>
+    );
+  }
 
   return (
-    <ScreenContainer scroll padded={false} edges={['top']}>
+    <ScreenContainer padded={false} edges={['top']}>
       <AppHeader
-        location={DEFAULT_LOCATION}
+        location={city || 'Select Location'}
         showNotification
         onNotificationPress={() => {}}
       />
-
-      <View style={styles.content}>
-        <Text style={styles.brand} accessibilityRole="header">
-          {APP_NAME}
-        </Text>
-        <Text style={styles.tagline}>{APP_TAGLINE}</Text>
-
-        <SectionCard title="Home Screen" style={styles.section}>
-          <Text style={styles.body}>Design system is working.</Text>
-          <Text style={styles.muted}>
-            Browse traditional outfits, rent with confidence, and list your own.
-          </Text>
-          <PrimaryButton
-            title="Explore Outfits"
-            onPress={() => navigation.navigate('Explore')}
-            style={styles.cta}
+      <FlatList
+        data={[{ id: 'recent' }]}
+        keyExtractor={(item) => item.id}
+        refreshControl={(
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
-        </SectionCard>
-
-        <Text style={styles.sectionTitle}>Categories</Text>
-        <View style={styles.categoryRow}>
-          {CATEGORIES.slice(0, 4).map((name) => (
-            <CategoryCard
-              key={name}
-              name={name}
-              icon="shirt-outline"
-              onPress={() => navigation.navigate('Explore')}
-              style={styles.categoryCard}
-            />
-          ))}
-        </View>
-
-        <Divider style={styles.divider} />
-
-        <Text style={styles.sectionTitle}>Featured preview</Text>
-        <OutfitCard
-          {...SAMPLE_OUTFIT}
-          onPress={() => navigation.navigate('OutfitDetails')}
-          onFavoritePress={() => {}}
-        />
-      </View>
+        )}
+        ListHeaderComponent={header}
+        renderItem={() => (
+          <HorizontalListingSection
+            title="Recently Added"
+            listings={recent.items}
+            loading={recent.loading}
+            error={recent.error}
+            emptyTitle="Recently added"
+            emptyMessage="New styles are coming soon. Explore all available outfits."
+            onRetry={() => loadSection(setRecent, () => listingService.getRecentListings())}
+            onSeeAll={() => openExplore({ source: 'recent' })}
+            {...listingProps}
+          />
+        )}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  content: {
+  list: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxxl,
   },
-  brand: {
-    ...typography.display,
-    color: colors.primary,
+  greeting: {
+    ...typography.h1,
+    color: colors.textPrimary,
     marginTop: spacing.sm,
   },
-  tagline: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginBottom: spacing.xl,
-  },
-  section: {
-    marginBottom: spacing.xl,
-  },
-  body: {
+  subheading: {
     ...typography.bodyLarge,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  muted: {
-    ...typography.body,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
     marginBottom: spacing.lg,
   },
-  cta: {
-    marginTop: spacing.sm,
-  },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
-  categoryRow: {
+  search: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    minHeight: 48,
+    marginBottom: spacing.xl,
+  },
+  searchText: {
+    ...typography.body,
+    color: colors.textMuted,
+    marginLeft: spacing.sm,
+  },
+  categorySkeletonRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.xl,
+  },
+  categorySkeleton: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.round,
+    backgroundColor: colors.surfaceSecondary,
+    marginRight: spacing.sm,
+  },
+  inlineError: {
     marginBottom: spacing.lg,
   },
-  categoryCard: {
-    width: '47%',
+  inlineErrorText: {
+    ...typography.body,
+    color: colors.error,
   },
-  divider: {
-    marginVertical: spacing.lg,
+  occasionList: {
+    marginBottom: spacing.xl,
   },
 });
 
