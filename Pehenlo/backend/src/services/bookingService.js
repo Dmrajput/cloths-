@@ -299,6 +299,8 @@ async function createBooking(user, body) {
 
   logger.info('booking_created', { bookingId: String(booking._id) });
   await recordBookingEvent(booking._id, 'BOOKING_CREATED', user._id);
+  const { notifyBookingRequested } = require('./notificationService');
+  await notifyBookingRequested(booking);
   return present(booking, user._id, { detailed: true });
 }
 
@@ -329,6 +331,8 @@ async function expireIfNeeded(booking) {
     await booking.save();
     await recordBookingEvent(booking._id, 'BOOKING_EXPIRED', null);
     logger.info('booking_expired', { bookingId: String(booking._id) });
+    const { notifyBookingExpired } = require('./notificationService');
+    await notifyBookingExpired(booking);
     return true;
   }
   if (booking.status === 'PAYMENT_REQUIRED' && booking.paymentDueAt && booking.paymentDueAt < new Date()) {
@@ -344,6 +348,8 @@ async function expireIfNeeded(booking) {
     );
     await recordBookingEvent(booking._id, 'BOOKING_EXPIRED', null);
     logger.info('payment_window_expired', { bookingId: String(booking._id) });
+    const { notifyBookingExpired } = require('./notificationService');
+    await notifyBookingExpired(booking, { paymentWindow: true });
     return true;
   }
   return false;
@@ -352,7 +358,14 @@ async function expireIfNeeded(booking) {
 async function getBooking(user, bookingId) {
   const booking = await loadOwned(user, bookingId);
   await expireIfNeeded(booking);
-  return present(booking, user._id, { detailed: true });
+  const payload = await present(booking, user._id, { detailed: true });
+  if (payload.role === 'owner') {
+    const { sellerEarningForBooking } = require('./earningService');
+    payload.sellerEarning = await sellerEarningForBooking(booking._id, user._id);
+  }
+  const { stateForBooking } = require('./reviewService');
+  payload.reviewState = await stateForBooking(user._id, booking);
+  return payload;
 }
 
 async function listMine(user, query) {
@@ -485,6 +498,8 @@ async function acceptBooking(user, bookingId, body) {
   logger.info('booking_accepted', { bookingId: String(booking._id) });
   await recordBookingEvent(booking._id, 'OWNER_ACCEPTED', user._id);
   await recordBookingEvent(booking._id, 'PAYMENT_REQUIRED', user._id);
+  const { notifyBookingAccepted } = require('./notificationService');
+  await notifyBookingAccepted(booking);
   return present(booking, user._id, { detailed: true });
 }
 
@@ -518,6 +533,8 @@ async function rejectBooking(user, bookingId, body) {
 
   logger.info('booking_rejected', { bookingId: String(booking._id) });
   await recordBookingEvent(booking._id, 'OWNER_REJECTED', user._id);
+  const { notifyBookingRejected } = require('./notificationService');
+  await notifyBookingRejected(booking);
   return present(booking, user._id, { detailed: true });
 }
 
@@ -564,6 +581,8 @@ async function cancelBooking(user, bookingId, body) {
 
   logger.info('booking_cancelled', { bookingId: String(booking._id) });
   await recordBookingEvent(booking._id, 'BOOKING_CANCELLED', user._id);
+  const { notifyBookingCancelled } = require('./notificationService');
+  await notifyBookingCancelled(booking);
   return present(booking, user._id, { detailed: true });
 }
 

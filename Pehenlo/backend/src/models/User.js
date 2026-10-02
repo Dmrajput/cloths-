@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: '',
+      maxlength: 80,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      default: '',
+      maxlength: 250,
     },
     country: {
       type: String,
@@ -70,6 +77,16 @@ const userSchema = new mongoose.Schema(
     lastLoginAt: {
       type: Date,
       default: null,
+    },
+    notificationPreferences: {
+      pushEnabled: { type: Boolean, default: true },
+      booking: { type: Boolean, default: true },
+      payment: { type: Boolean, default: true },
+      earnings: { type: Boolean, default: true },
+      reviews: { type: Boolean, default: true },
+      listings: { type: Boolean, default: true },
+      safety: { type: Boolean, default: true },
+      account: { type: Boolean, default: true },
     },
   },
   { timestamps: true }

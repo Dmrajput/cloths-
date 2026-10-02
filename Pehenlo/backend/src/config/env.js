@@ -27,6 +27,10 @@ const env = {
   OTP_IP_REQUEST_LIMIT: Number(process.env.OTP_IP_REQUEST_LIMIT) || 10,
   BOOKING_REQUEST_EXPIRY_MINUTES: Number(process.env.BOOKING_REQUEST_EXPIRY_MINUTES) || 30,
   PLATFORM_FEE_PERCENT: Number(process.env.PLATFORM_FEE_PERCENT) || 15,
+  SELLER_COMMISSION_PERCENT: Number(process.env.SELLER_COMMISSION_PERCENT ?? 15),
+  SELLER_SETTLEMENT_DAYS: Number(process.env.SELLER_SETTLEMENT_DAYS ?? 2),
+  MINIMUM_PAYOUT_AMOUNT: Number(process.env.MINIMUM_PAYOUT_AMOUNT ?? 500),
+  EXPO_PUSH_API_URL: process.env.EXPO_PUSH_API_URL || 'https://exp.host/--/api/v2/push/send',
 };
 
 const WEAK_SECRETS = new Set(['', 'change_me_jwt_secret', 'secret', 'jwt_secret']);

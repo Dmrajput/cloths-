@@ -16,8 +16,11 @@ import { THEME } from '../../constants/theme';
 import { genderLabel, occasionLabel } from '../../constants/listingConstants';
 import { listingService } from '../../services/listingService';
 import { useAuth } from '../../hooks/useAuth';
+import { useWishlist } from '../../context/WishlistContext';
 import ListingImageGallery from '../../components/listing/ListingImageGallery';
 import ListingHeader from '../../components/listing/ListingHeader';
+import ListingReviewsPreview from '../../components/reviews/ListingReviewsPreview';
+import { REPORT_TARGETS } from '../../constants/safetyConstants';
 import RentalPriceCard from '../../components/listing/RentalPriceCard';
 import ListingInfoSection from '../../components/listing/ListingInfoSection';
 import MeasurementTable from '../../components/listing/MeasurementTable';
@@ -55,6 +58,7 @@ const OutfitDetailsScreen = () => {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isAuthenticated } = useAuth();
+  const { isFavorite, toggleFavorite } = useWishlist();
   const listingId = route.params?.listingId;
   const [listing, setListing] = useState(null);
   const [similar, setSimilar] = useState([]);
@@ -164,12 +168,16 @@ const OutfitDetailsScreen = () => {
         </Pressable>
         <View style={styles.topActions}>
           <Pressable
-            onPress={() => Alert.alert('Saved outfits', 'Saving outfits will be available in a later update.')}
+            onPress={async () => {
+              const result = await toggleFavorite(listingId);
+              if (result?.needsLogin) Alert.alert('Sign in to save outfits to your Wishlist.');
+              else if (result && !result.ok && !result.pending) Alert.alert('Unable to update Wishlist.');
+            }}
             accessibilityRole="button"
-            accessibilityLabel="Favorite"
+            accessibilityLabel={isFavorite(listingId) ? 'Remove from Wishlist' : 'Add to Wishlist'}
             style={styles.iconButton}
           >
-            <Ionicons name="heart-outline" size={22} color={colors.textPrimary} />
+            <Ionicons name={isFavorite(listingId) ? 'heart' : 'heart-outline'} size={22} color={isFavorite(listingId) ? colors.primary : colors.textPrimary} />
           </Pressable>
           <Pressable onPress={shareListing} accessibilityRole="button" accessibilityLabel="Share" style={styles.iconButton}>
             <Ionicons name="share-outline" size={22} color={colors.textPrimary} />
@@ -323,12 +331,31 @@ const OutfitDetailsScreen = () => {
               </ListingInfoSection>
 
               <ListingInfoSection title="About the owner">
-                <OwnerCard owner={listing.owner} listingRating={listing.rating} reviewCount={listing.reviewCount} />
+                <OwnerCard
+                  owner={listing.owner}
+                  listingRating={listing.rating}
+                  reviewCount={listing.reviewCount}
+                  onPress={listing.owner?.id && !isOwner ? () => navigation.navigate('PublicProfile', { userId: listing.owner.id }) : undefined}
+                />
+              </ListingInfoSection>
+
+              <ListingInfoSection title="Ratings & Reviews">
+                <ListingReviewsPreview listingId={listing.id} />
               </ListingInfoSection>
 
               <ListingInfoSection title="Before you rent">
                 <Text style={styles.body}>Condition details are shared by the owner.</Text>
                 <Text style={styles.body}>Only active outfits appear in Explore.</Text>
+                {!isOwner ? (
+                  <Pressable
+                    onPress={() => navigation.navigate('Report', { targetType: REPORT_TARGETS.LISTING, targetId: listing.id })}
+                    accessibilityRole="button"
+                    accessibilityLabel="Report listing"
+                    style={styles.report}
+                  >
+                    <Text style={styles.link}>Report listing</Text>
+                  </Pressable>
+                ) : null}
               </ListingInfoSection>
 
               {listedLabel(listing.createdAt) ? <Text style={styles.listed}>{listedLabel(listing.createdAt)}</Text> : null}
@@ -407,6 +434,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginTop: spacing.xs,
   },
+  report: { minHeight: 44, justifyContent: 'center' },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -8,10 +8,13 @@ const uploadRoutes = require('./uploadRoutes');
 const bookingRoutes = require('./bookingRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const earningsRoutes = require('./earningsRoutes');
+const payoutRoutes = require('./payoutRoutes');
+const payoutAccountRoutes = require('./payoutAccountRoutes');
 const reviewRoutes = require('./reviewRoutes');
 const wishlistRoutes = require('./wishlistRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const disputeRoutes = require('./disputeRoutes');
+const reportRoutes = require('./reportRoutes');
 
 const router = express.Router();
 
@@ -23,7 +26,10 @@ router.use('/uploads', uploadRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/earnings', earningsRoutes);
+router.use('/payouts', payoutRoutes);
+router.use('/payout-accounts', payoutAccountRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/reports', reportRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/disputes', disputeRoutes);

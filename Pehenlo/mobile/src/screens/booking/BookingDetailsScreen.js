@@ -27,6 +27,8 @@ import {
   rentalAttention,
   securityDepositNote,
 } from '../../utils/rentalHelpers';
+import { REVIEW_TYPES } from '../../constants/reviewConstants';
+import { REPORT_TARGETS } from '../../constants/safetyConstants';
 
 const { colors, typography, spacing, radius } = THEME;
 
@@ -210,6 +212,47 @@ const BookingDetailsScreen = () => {
             {booking.paymentStatus === 'FAILED' && booking.paymentFailureReason ? <Text style={styles.body}>{booking.paymentFailureReason}</Text> : null}
             {isOwner ? null : booking.razorpayOrderId ? <Text style={styles.reference}>Order {booking.razorpayOrderId}</Text> : null}
             <BookingPriceBreakdown pricing={booking} paid={booking.paymentStatus === 'PAID'} />
+            {isOwner && booking.sellerEarning ? (
+              <View>
+                <Text style={styles.section}>Seller earnings</Text>
+                <Text style={styles.body}>Gross rental {rupees(booking.sellerEarning.grossRentalAmount)}</Text>
+                <Text style={styles.body}>Pehenlo commission -{rupees(booking.sellerEarning.commissionAmount)}</Text>
+                <Text style={styles.body}>Net earning {rupees(booking.sellerEarning.netEarning)}</Text>
+                <Text style={styles.body}>Security deposit {rupees(booking.sellerEarning.securityDeposit)} is not included</Text>
+                <Pressable onPress={() => navigation.navigate('EarningDetails', { earningId: booking.sellerEarning.id })} accessibilityRole="button" accessibilityLabel="View earning">
+                  <Text style={styles.link}>View earning</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <Text style={styles.section}>Safety</Text>
+            <Text style={styles.body}>Keep payments and booking communication inside Pehenlo.</Text>
+            {booking.reviewState?.eligible ? (
+              <View>
+                <Text style={styles.section}>Share your experience</Text>
+                {!isOwner ? (
+                  <>
+                    <Pressable onPress={() => navigation.navigate('WriteReview', { bookingId, type: REVIEW_TYPES.OUTFIT })} accessibilityRole="button" accessibilityLabel={booking.reviewState.outfit ? 'Edit outfit review' : 'Review outfit'} style={styles.report}>
+                      <Text style={styles.link}>{booking.reviewState.outfit ? 'Your outfit review' : 'Review Outfit'}</Text>
+                    </Pressable>
+                    <Pressable onPress={() => navigation.navigate('WriteReview', { bookingId, type: REVIEW_TYPES.OWNER })} accessibilityRole="button" accessibilityLabel={booking.reviewState.owner ? 'Edit owner review' : 'Review owner'} style={styles.report}>
+                      <Text style={styles.link}>{booking.reviewState.owner ? 'Your owner review' : 'Review Owner'}</Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <Pressable onPress={() => navigation.navigate('WriteReview', { bookingId, type: REVIEW_TYPES.RENTER })} accessibilityRole="button" accessibilityLabel={booking.reviewState.renter ? 'Edit renter review' : 'Review renter'} style={styles.report}>
+                    <Text style={styles.link}>{booking.reviewState.renter ? 'Your renter review' : 'Review Renter'}</Text>
+                  </Pressable>
+                )}
+                {isOwner && booking.reviewState.renterReputation ? (
+                  <Text style={styles.body}>
+                    Completed rentals: {booking.reviewState.renterReputation.completedRentals}. Positive reviews: {booking.reviewState.renterReputation.positiveReviews}.
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+            <Pressable onPress={() => navigation.navigate('Report', { targetType: REPORT_TARGETS.BOOKING, targetId: bookingId })} accessibilityRole="button" accessibilityLabel="Report booking" style={styles.report}>
+              <Text style={styles.link}>Report booking</Text>
+            </Pressable>
             <BookingTimeline steps={booking.timeline || []} />
             {actionError ? <Text style={styles.formError}>{actionError}</Text> : null}
             {!isOwner && (booking.status === BOOKING_STATUS.EXPIRED || booking.status === BOOKING_STATUS.REJECTED) ? (
@@ -284,6 +327,7 @@ const styles = StyleSheet.create({
   section: { ...typography.h3, color: colors.textPrimary, marginTop: spacing.lg },
   body: { ...typography.body, color: colors.textPrimary, marginTop: spacing.xs },
   link: { ...typography.label, color: colors.primary, marginTop: spacing.xs },
+  report: { minHeight: 44, justifyContent: 'center' },
   formError: { ...typography.body, color: colors.error, marginTop: spacing.md },
   actions: { marginTop: spacing.md },
   second: { marginTop: spacing.sm },

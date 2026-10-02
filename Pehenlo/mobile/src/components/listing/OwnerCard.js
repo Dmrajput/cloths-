@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { THEME } from '../../constants/theme';
 import Avatar from '../common/Avatar';
 
@@ -11,12 +11,12 @@ function memberLabel(value) {
   return `Member since ${date.toLocaleString('en-IN', { month: 'long', year: 'numeric' })}`;
 }
 
-const OwnerCard = ({ owner, listingRating, reviewCount }) => {
+const OwnerCard = ({ owner, listingRating, reviewCount, onPress }) => {
   const name = owner?.name?.trim() || 'Pehenlo Member';
   const since = memberLabel(owner?.memberSince);
   const showListingRating = Number(reviewCount) > 0 && Number(listingRating) > 0;
 
-  return (
+  const content = (
     <View style={styles.card} accessibilityLabel={`Listed by ${name}`}>
       <Avatar uri={owner?.profileImage} name={name} size={52} />
       <View style={styles.copy}>
@@ -29,6 +29,12 @@ const OwnerCard = ({ owner, listingRating, reviewCount }) => {
         )}
       </View>
     </View>
+  );
+  if (!onPress) return content;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`View profile of ${name}`}>
+      {content}
+    </Pressable>
   );
 };
 

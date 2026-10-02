@@ -36,6 +36,12 @@
           "photosPermission": "Pehenlo uses your photos so you can list an outfit.",
           "cameraPermission": "Pehenlo uses your camera so you can photograph an outfit."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#7A1F3D"
+        }
       ]
     ]
   }

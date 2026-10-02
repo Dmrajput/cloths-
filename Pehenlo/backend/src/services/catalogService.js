@@ -15,8 +15,13 @@ function clampLimit(value, fallback = HOME_LIMIT) {
   return Math.min(Math.max(Math.trunc(parsed), 1), 10);
 }
 
-async function findActiveListings({ filter = {}, sort = { createdAt: -1 }, limit = HOME_LIMIT, detailed = false } = {}) {
-  const listings = await Listing.find({ ...ACTIVE_FILTER, ...filter })
+function withExcludedOwners(filter, excludeOwners) {
+  if (!excludeOwners?.length) return filter;
+  return { ...filter, owner: { $nin: excludeOwners } };
+}
+
+async function findActiveListings({ filter = {}, sort = { createdAt: -1 }, limit = HOME_LIMIT, detailed = false, excludeOwners = [] } = {}) {
+  const listings = await Listing.find(withExcludedOwners({ ...ACTIVE_FILTER, ...filter }, excludeOwners))
     .sort(sort)
     .limit(limit)
     .populate(LISTING_POPULATE);
@@ -33,7 +38,7 @@ const SORTS = {
   views_desc: { viewCount: -1, createdAt: -1 },
 };
 
-async function searchActiveListings({ filter, sort = 'recommended', source, page = 1, limit = 20 }) {
+async function searchActiveListings({ filter, sort = 'recommended', source, page = 1, limit = 20, excludeOwners = [] }) {
   let sortSpec = SORTS[sort] || SORTS.recommended;
   if (source === 'trending' && sort === 'recommended') {
     sortSpec = { favoriteCount: -1, viewCount: -1, rating: -1, createdAt: -1 };
@@ -42,7 +47,7 @@ async function searchActiveListings({ filter, sort = 'recommended', source, page
     sortSpec = SORTS.newest;
   }
 
-  const query = { ...ACTIVE_FILTER, ...filter };
+  const query = withExcludedOwners({ ...ACTIVE_FILTER, ...filter }, excludeOwners);
   const total = await Listing.countDocuments(query);
   const skip = (page - 1) * limit;
   const listings = await Listing.find(query)
@@ -77,13 +82,13 @@ async function findPublicListingById(listingId) {
   return Listing.findOne({ _id: listingId, ...ACTIVE_FILTER }).populate(DETAIL_POPULATE);
 }
 
-async function findSimilarListings(listing) {
+async function findSimilarListings(listing, excludeOwners = []) {
   const categoryId = listing.category?._id || listing.category;
-  const base = {
+  const base = withExcludedOwners({
     ...ACTIVE_FILTER,
     _id: { $ne: listing._id },
     category: categoryId,
-  };
+  }, excludeOwners);
   const sameCity = listing.city
     ? await Listing.find({ ...base, city: listing.city }).sort({ rating: -1, createdAt: -1 }).limit(6).populate(LISTING_POPULATE)
     : [];

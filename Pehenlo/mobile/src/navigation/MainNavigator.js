@@ -11,15 +11,28 @@ import OwnerBookingRequestsScreen from '../screens/booking/OwnerBookingRequestsS
 import CheckoutScreen from '../screens/rentals/CheckoutScreen';
 import PaymentScreen from '../screens/payment/PaymentScreen';
 import PaymentResultScreen from '../screens/payment/PaymentResultScreen';
-import EarningsScreen from '../screens/earnings/EarningsScreen';
-import TransactionHistoryScreen from '../screens/earnings/TransactionHistoryScreen';
-import PayoutScreen from '../screens/earnings/PayoutScreen';
+import MyEarningsScreen from '../screens/earnings/MyEarningsScreen';
+import EarningDetailsScreen from '../screens/earnings/EarningDetailsScreen';
+import WithdrawScreen from '../screens/earnings/WithdrawScreen';
+import PayoutHistoryScreen from '../screens/earnings/PayoutHistoryScreen';
+import PayoutDetailsScreen from '../screens/earnings/PayoutDetailsScreen';
+import PayoutAccountScreen from '../screens/earnings/PayoutAccountScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
-import WishlistScreen from '../screens/profile/WishlistScreen';
+import WishlistScreen from '../screens/wishlist/WishlistScreen';
+import SettingsScreen from '../screens/profile/SettingsScreen';
+import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
+import TermsScreen from '../screens/profile/TermsScreen';
+import PublicProfileScreen from '../screens/profile/PublicProfileScreen';
+import WriteReviewScreen from '../screens/reviews/WriteReviewScreen';
+import ReviewsScreen from '../screens/reviews/ReviewsScreen';
+import SafetyCenterScreen from '../screens/safety/SafetyCenterScreen';
+import ReportScreen from '../screens/safety/ReportScreen';
+import BlockedUsersScreen from '../screens/safety/BlockedUsersScreen';
 import KYCVerificationScreen from '../screens/profile/KYCVerificationScreen';
 import BankAccountScreen from '../screens/profile/BankAccountScreen';
 import AddressesScreen from '../screens/profile/AddressesScreen';
-import NotificationSettingsScreen from '../screens/profile/NotificationSettingsScreen';
+import NotificationsScreen from '../screens/notifications/NotificationsScreen';
+import NotificationPreferencesScreen from '../screens/notifications/NotificationPreferencesScreen';
 import HelpSupportScreen from '../screens/profile/HelpSupportScreen';
 import SearchScreen from '../screens/explore/SearchScreen';
 import FilterScreen from '../screens/explore/FilterScreen';
@@ -80,7 +93,7 @@ export default function MainNavigator() {
       <Stack.Screen
         name="MyListings"
         component={MyListingsScreen}
-        options={{ title: 'My Listings' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Availability"
@@ -117,31 +130,31 @@ export default function MainNavigator() {
         component={PaymentResultScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="Earnings"
-        component={EarningsScreen}
-        options={{ title: 'Earnings' }}
-      />
-      <Stack.Screen
-        name="TransactionHistory"
-        component={TransactionHistoryScreen}
-        options={{ title: 'Transactions' }}
-      />
-      <Stack.Screen
-        name="Payout"
-        component={PayoutScreen}
-        options={{ title: 'Payout' }}
-      />
+      <Stack.Screen name="Earnings" component={MyEarningsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EarningDetails" component={EarningDetailsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Withdraw" component={WithdrawScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PayoutHistory" component={PayoutHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PayoutDetails" component={PayoutDetailsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PayoutAccount" component={PayoutAccountScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
-        options={{ title: 'Edit Profile' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Wishlist"
         component={WishlistScreen}
-        options={{ title: 'Wishlist' }}
+        options={{ headerShown: false }}
       />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PublicProfile" component={PublicProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SafetyCenter" component={SafetyCenterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Report" component={ReportScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Terms" component={TermsScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="KYCVerification"
         component={KYCVerificationScreen}
@@ -157,11 +170,8 @@ export default function MainNavigator() {
         component={AddressesScreen}
         options={{ title: 'Addresses' }}
       />
-      <Stack.Screen
-        name="NotificationSettings"
-        component={NotificationSettingsScreen}
-        options={{ title: 'Notifications' }}
-      />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="HelpSupport"
         component={HelpSupportScreen}

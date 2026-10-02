@@ -56,7 +56,7 @@ const OutfitCard = ({
           color={isFavorite ? colors.primary : colors.textPrimary}
           backgroundColor="rgba(255,255,255,0.92)"
           style={styles.favoriteButton}
-          accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          accessibilityLabel={isFavorite ? 'Remove from Wishlist' : 'Add to Wishlist'}
         />
       </View>
 

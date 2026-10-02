@@ -1,11 +1,11 @@
 const express = require('express');
-const earningsController = require('../controllers/earningsController');
+const earningController = require('../controllers/earningController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get('/', authMiddleware, earningsController.getEarnings);
-router.post('/payout', authMiddleware, earningsController.requestPayout);
-router.get('/payouts', authMiddleware, earningsController.getPayoutHistory);
+router.get('/summary', authMiddleware, earningController.getSummary);
+router.get('/', authMiddleware, earningController.listEarnings);
+router.get('/:earningId', authMiddleware, earningController.getEarning);
 
 module.exports = router;

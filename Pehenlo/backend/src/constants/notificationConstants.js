@@ -1,0 +1,62 @@
+const TYPES = [
+  'BOOKING_REQUEST_RECEIVED',
+  'BOOKING_REQUEST_ACCEPTED',
+  'BOOKING_REQUEST_REJECTED',
+  'BOOKING_CANCELLED',
+  'BOOKING_EXPIRED',
+  'BOOKING_PAYMENT_REQUIRED',
+  'BOOKING_PAYMENT_COMPLETED',
+  'BOOKING_CONFIRMED',
+  'PAYMENT_REQUIRED',
+  'PAYMENT_SUCCESS',
+  'PAYMENT_FAILED',
+  'PAYMENT_EXPIRED',
+  'EARNING_CREATED',
+  'EARNING_AVAILABLE',
+  'PAYOUT_REQUESTED',
+  'PAYOUT_PAID',
+  'PAYOUT_FAILED',
+  'REVIEW_RECEIVED',
+  'LISTING_SUBMITTED',
+  'REPORT_RECEIVED',
+  'WELCOME',
+  'PROFILE_UPDATED',
+];
+
+const CATEGORIES = ['BOOKING', 'PAYMENT', 'EARNING', 'REVIEW', 'LISTING', 'SAFETY', 'ACCOUNT', 'SYSTEM'];
+const PRIORITIES = ['LOW', 'NORMAL', 'HIGH'];
+const STATUSES = ['PENDING', 'SENT', 'FAILED', 'READ'];
+const ACTIONS = [
+  'OPEN_BOOKING',
+  'OPEN_PAYMENT',
+  'OPEN_LISTING',
+  'OPEN_REVIEW',
+  'OPEN_EARNING',
+  'OPEN_PAYOUT',
+  'OPEN_PROFILE',
+  'OPEN_SAFETY',
+  'OPEN_NOTIFICATIONS',
+];
+const PREFERENCE_KEYS = ['pushEnabled', 'booking', 'payment', 'earnings', 'reviews', 'listings', 'safety', 'account'];
+const DATA_KEYS = ['bookingId', 'listingId', 'reviewId', 'earningId', 'payoutId', 'userId', 'reportId', 'action'];
+const CATEGORY_PREFERENCE = {
+  BOOKING: 'booking',
+  PAYMENT: 'payment',
+  EARNING: 'earnings',
+  REVIEW: 'reviews',
+  LISTING: 'listings',
+  SAFETY: 'safety',
+  ACCOUNT: 'account',
+  SYSTEM: 'account',
+};
+
+module.exports = {
+  TYPES,
+  CATEGORIES,
+  PRIORITIES,
+  STATUSES,
+  ACTIONS,
+  PREFERENCE_KEYS,
+  DATA_KEYS,
+  CATEGORY_PREFERENCE,
+};

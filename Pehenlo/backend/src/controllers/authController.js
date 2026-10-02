@@ -46,6 +46,8 @@ const verifyOtp = async (req, res, next) => {
         role: 'user',
         lastLoginAt: new Date(),
       });
+      const { notifyWelcome } = require('../services/notificationService');
+      await notifyWelcome(user._id);
     } else {
       user.isPhoneVerified = true;
       user.lastLoginAt = new Date();

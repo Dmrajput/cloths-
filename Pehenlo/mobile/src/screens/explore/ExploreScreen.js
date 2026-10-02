@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -24,6 +25,7 @@ import {
 } from '../../utils/listingQuery';
 import ActiveFilterChips from './components/ActiveFilterChips';
 import SortBottomSheet from './components/SortBottomSheet';
+import { useWishlist } from '../../context/WishlistContext';
 
 const { colors, typography, spacing, radius } = THEME;
 
@@ -83,7 +85,7 @@ const ExploreScreen = () => {
   const [error, setError] = useState(null);
   const [pageError, setPageError] = useState(null);
   const [sortOpen, setSortOpen] = useState(false);
-  const [favorites, setFavorites] = useState({});
+  const { isFavorite, toggleFavorite } = useWishlist();
   const [categories, setCategories] = useState([]);
 
   const cardWidth = (width - spacing.lg * 2 - spacing.md) / 2;
@@ -332,12 +334,13 @@ const ExploreScreen = () => {
             duration={item.rentalDuration}
             rating={item.rating}
             location={item.city}
-            isFavorite={Boolean(favorites[item.id])}
+            isFavorite={isFavorite(item.id)}
             onPress={() => navigation.navigate('OutfitDetails', { listingId: item.id })}
-            onFavoritePress={() => setFavorites((current) => ({
-              ...current,
-              [item.id]: !current[item.id],
-            }))}
+            onFavoritePress={async () => {
+              const result = await toggleFavorite(item.id);
+              if (result?.needsLogin) Alert.alert('Sign in to save outfits to your Wishlist.');
+              else if (result && !result.ok && !result.pending) Alert.alert('Unable to update Wishlist.');
+            }}
             style={{ width: cardWidth }}
           />
         )}

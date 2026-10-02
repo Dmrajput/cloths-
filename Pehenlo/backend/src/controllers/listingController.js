@@ -7,6 +7,7 @@ const { toPublicListing, toOwnerListing } = require('../utils/catalogPresenter')
 const { HTTP_STATUS } = require('../utils/constants');
 const { ACTIVE_FILTER, clampLimit, findActiveListings, searchActiveListings, findPublicListingById, findSimilarListings, recordListingView, DETAIL_POPULATE } = require('../services/catalogService');
 const listingWriteService = require('../services/listingWriteService');
+const { blockedIds } = require('../services/userSafetyService');
 const { storeListingImage } = require('../services/listingImageService');
 
 const GENDERS = {
@@ -230,6 +231,11 @@ async function buildExploreFilter(req) {
   return { filter, source };
 }
 
+async function excludedOwners(req) {
+  if (!req.user) return [];
+  return blockedIds(req.user._id);
+}
+
 const getListings = async (req, res, next) => {
   try {
     const page = readInt(req.query.page, 'page', { min: 1, max: 1000, fallback: 1 });
@@ -244,6 +250,7 @@ const getListings = async (req, res, next) => {
       source,
       page,
       limit,
+      excludeOwners: await excludedOwners(req),
     });
     return successResponse(res, result, 'Listings fetched successfully');
   } catch (error) {
@@ -258,6 +265,7 @@ const getFeaturedListings = async (req, res, next) => {
       filter: { isFeatured: true },
       sort: { sortOrder: 1, createdAt: -1 },
       limit: clampLimit(req.query.limit),
+      excludeOwners: await excludedOwners(req),
     });
     return successResponse(res, { listings }, 'Featured listings');
   } catch (_error) {
@@ -270,6 +278,7 @@ const getTrendingListings = async (req, res, next) => {
     const listings = await findActiveListings({
       sort: { favoriteCount: -1, viewCount: -1, rating: -1, createdAt: -1 },
       limit: clampLimit(req.query.limit),
+      excludeOwners: await excludedOwners(req),
     });
     return successResponse(res, { listings }, 'Trending listings');
   } catch (_error) {
@@ -288,6 +297,7 @@ const getNearbyListings = async (req, res, next) => {
       filter: { city: new RegExp(`^${escapeRegex(city)}$`, 'i') },
       sort: { rating: -1, createdAt: -1 },
       limit: clampLimit(req.query.limit),
+      excludeOwners: await excludedOwners(req),
     });
     return successResponse(res, { listings }, 'Nearby listings');
   } catch (_error) {
@@ -300,6 +310,7 @@ const getRecentListings = async (req, res, next) => {
     const listings = await findActiveListings({
       sort: { createdAt: -1 },
       limit: clampLimit(req.query.limit),
+      excludeOwners: await excludedOwners(req),
     });
     return successResponse(res, { listings }, 'Recent listings');
   } catch (_error) {
@@ -325,6 +336,12 @@ const getListingById = async (req, res, next) => {
     const payload = toPublicListing(listing, { detailed: true });
     const ownerId = listing.owner?._id || listing.owner;
     payload.viewerIsOwner = Boolean(req.user && String(ownerId) === String(req.user._id));
+    if (req.user && !payload.viewerIsOwner) {
+      const hidden = (await excludedOwners(req)).some((id) => String(id) === String(ownerId));
+      if (hidden) {
+        throw new AppError('This outfit is no longer available', HTTP_STATUS.NOT_FOUND, 'LISTING_NOT_FOUND');
+      }
+    }
     return successResponse(res, { listing: payload }, 'Listing fetched successfully');
   } catch (error) {
     return next(error);
@@ -340,7 +357,7 @@ const getSimilarListings = async (req, res, next) => {
     if (!listing) {
       throw new AppError('This outfit is no longer available', HTTP_STATUS.NOT_FOUND, 'LISTING_NOT_FOUND');
     }
-    const items = await findSimilarListings(listing);
+    const items = await findSimilarListings(listing, await excludedOwners(req));
     return successResponse(res, { items }, 'Similar listings');
   } catch (error) {
     return next(error);

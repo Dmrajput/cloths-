@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
 import { EMPTY_RENTALS, PERSPECTIVE_TABS, RENTER_TABS } from '../../constants/rentalConstants';
 import { ScreenContainer, AppHeader } from '../../components/common';
@@ -14,9 +14,19 @@ const { spacing } = THEME;
 
 const MyRentalsScreen = () => {
   const navigation = useNavigation();
-  const [perspective, setPerspective] = useState('renter');
+  const route = useRoute();
+  const [perspective, setPerspective] = useState(route.params?.perspective === 'owner' ? 'owner' : 'renter');
   const [group, setGroup] = useState('upcoming');
   const empty = EMPTY_RENTALS.renter[group];
+
+  useFocusEffect(useCallback(() => {
+    const next = route.params?.perspective;
+    if (next === 'owner' || next === 'renter') {
+      setPerspective(next);
+      setGroup(next === 'owner' ? 'requests' : 'upcoming');
+      navigation.setParams({ perspective: undefined });
+    }
+  }, [navigation, route.params?.perspective]));
 
   const changePerspective = (next) => {
     setPerspective(next);

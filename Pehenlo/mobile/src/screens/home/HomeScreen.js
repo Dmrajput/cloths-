@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { THEME } from '../../constants/theme';
@@ -14,6 +14,8 @@ import CategoryList from '../../components/home/CategoryList';
 import OccasionCard from '../../components/home/OccasionCard';
 import SectionHeader from '../../components/home/SectionHeader';
 import HorizontalListingSection from '../../components/home/HorizontalListingSection';
+import { useWishlist } from '../../context/WishlistContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 const { colors, typography, spacing, radius } = THEME;
 
@@ -34,7 +36,8 @@ const HomeScreen = () => {
   const [nearby, setNearby] = useState(initialSection);
   const [recent, setRecent] = useState(initialSection);
   const [refreshing, setRefreshing] = useState(false);
-  const [favorites, setFavorites] = useState({});
+  const { isFavorite, toggleFavorite } = useWishlist();
+  const { unreadCount } = useNotifications();
 
   const loadSection = useCallback(async (setter, request) => {
     setter((current) => ({ ...current, loading: current.items.length === 0, error: '' }));
@@ -90,8 +93,13 @@ const HomeScreen = () => {
     sort: params.sort || null,
   }, { merge: false });
   const openListing = (listing) => navigation.navigate('OutfitDetails', { listingId: listing.id });
-  const toggleFavorite = (id) => {
-    setFavorites((current) => ({ ...current, [id]: !current[id] }));
+  const onFavoritePress = async (id) => {
+    const result = await toggleFavorite(id);
+    if (result?.needsLogin) {
+      Alert.alert('Sign in to save outfits to your Wishlist.');
+    } else if (result && !result.ok && !result.pending) {
+      Alert.alert('Unable to update Wishlist.');
+    }
   };
 
   const sections = [
@@ -106,8 +114,8 @@ const HomeScreen = () => {
 
   const listingProps = {
     onPressListing: openListing,
-    onFavoritePress: toggleFavorite,
-    isFavorite: (id) => Boolean(favorites[id]),
+    onFavoritePress,
+    isFavorite,
   };
 
   const header = (
@@ -226,7 +234,8 @@ const HomeScreen = () => {
         <AppHeader
           location={city || 'Select Location'}
           showNotification
-          onNotificationPress={() => {}}
+          notificationCount={unreadCount}
+          onNotificationPress={() => navigation.navigate('Notifications')}
         />
         <ErrorState
           title="Unable to load Pehenlo"
@@ -243,7 +252,8 @@ const HomeScreen = () => {
       <AppHeader
         location={city || 'Select Location'}
         showNotification
-        onNotificationPress={() => {}}
+        notificationCount={unreadCount}
+        onNotificationPress={() => navigation.navigate('Notifications')}
       />
       <FlatList
         data={[{ id: 'recent' }]}

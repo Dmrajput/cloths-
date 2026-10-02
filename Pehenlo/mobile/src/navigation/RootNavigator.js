@@ -1,9 +1,13 @@
+import { View } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { THEME } from '../constants/theme';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import { navigationRef } from './navigationRef';
+import { flushPendingNotifications } from '../utils/notificationNavigation';
+import InAppNotificationBanner from '../components/notifications/InAppNotificationBanner';
 import SplashScreen from '../screens/auth/SplashScreen';
 import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
 
@@ -50,5 +54,12 @@ export default function RootNavigator() {
     navigator = <MainNavigator />;
   }
 
-  return <NavigationContainer theme={navTheme}>{navigator}</NavigationContainer>;
+  return (
+    <View style={{ flex: 1 }}>
+      <NavigationContainer ref={navigationRef} onReady={flushPendingNotifications} theme={navTheme}>
+        {navigator}
+      </NavigationContainer>
+      {isAuthenticated ? <InAppNotificationBanner /> : null}
+    </View>
+  );
 }

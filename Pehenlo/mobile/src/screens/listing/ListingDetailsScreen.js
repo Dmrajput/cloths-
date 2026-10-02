@@ -22,7 +22,7 @@ const Chip = ({ label, selected, onPress }) => (
     onPress={onPress}
     accessibilityRole="button"
     accessibilityLabel={label}
-    accessibilityState={{ selected }}
+    accessibilityState={{ selected: Boolean(selected) }}
     style={[styles.chip, selected && styles.chipOn]}
   >
     <Text style={[styles.chipText, selected && styles.chipTextOn]}>{label}</Text>
@@ -36,7 +36,7 @@ const ListingDetailsScreen = () => {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [customColor, setCustomColor] = useState(
-    activeDraft?.color && !COLOR_OPTIONS.includes(activeDraft.color)
+    Boolean(activeDraft?.color) && !COLOR_OPTIONS.includes(activeDraft.color)
   );
   const draft = activeDraft || {};
 

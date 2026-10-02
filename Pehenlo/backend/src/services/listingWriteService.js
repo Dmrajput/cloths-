@@ -359,6 +359,8 @@ async function submitOwnedListing(user, listingId) {
   listing.status = 'PENDING_APPROVAL';
   listing.isActive = false;
   await listing.save();
+  const { notifyListingSubmitted } = require('./notificationService');
+  await notifyListingSubmitted(listing, user._id);
   return {
     listingId: String(listing._id),
     status: listing.status,

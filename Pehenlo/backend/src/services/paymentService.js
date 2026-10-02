@@ -36,7 +36,7 @@ async function expirePayableBookings(listingId) {
     paymentDueAt: { $lt: new Date() },
   };
   if (listingId) filter.listing = listingId;
-  const expired = await Booking.find(filter).select('_id');
+  const expired = await Booking.find(filter).select('_id renter listing');
   if (!expired.length) return 0;
   const ids = expired.map((booking) => booking._id);
   await Booking.updateMany(
@@ -55,6 +55,8 @@ async function expirePayableBookings(listingId) {
     timestamp: new Date(),
   })));
   logger.info('payment_window_expired', { count: ids.length });
+  const { notifyBookingExpired } = require('./notificationService');
+  await Promise.all(expired.map((booking) => notifyBookingExpired(booking, { paymentWindow: true })));
   return ids.length;
 }
 
@@ -173,6 +175,8 @@ async function createOrder(user, bookingId) {
       booking.paymentStatus = 'FAILED';
       booking.paymentFailureReason = 'Payment could not be started';
       await booking.save();
+      const { notifyPaymentFailed } = require('./notificationService');
+      await notifyPaymentFailed(booking);
     }
     if (error instanceof AppError) throw error;
     throw new AppError('Payment could not be started. Please try again.', 502, 'RAZORPAY_ORDER_CREATION_FAILED');
@@ -182,7 +186,11 @@ async function createOrder(user, bookingId) {
 async function ensureBookingConfirmed(payment) {
   const booking = await Booking.findById(payment.booking);
   if (!booking) return null;
-  if (booking.status === 'CONFIRMED' && booking.paymentStatus === 'PAID') return booking;
+  if (booking.status === 'CONFIRMED' && booking.paymentStatus === 'PAID') {
+    const { ensureRentalEarning } = require('./earningService');
+    await ensureRentalEarning(booking, payment);
+    return booking;
+  }
   if (booking.status !== 'PAYMENT_REQUIRED') {
     logger.warn('payment_booking_inconsistent', {
       bookingId: String(booking._id),
@@ -206,7 +214,11 @@ async function ensureBookingConfirmed(payment) {
   const { recordBookingEvent } = require('./bookingEventService');
   await recordBookingEvent(booking._id, 'PAYMENT_COMPLETED', booking.renter);
   await recordBookingEvent(booking._id, 'BOOKING_CONFIRMED', booking.renter);
+  const { ensureRentalEarning } = require('./earningService');
+  await ensureRentalEarning(booking, payment);
   logger.info('payment_captured', { bookingId: String(booking._id), orderId: payment.razorpayOrderId });
+  const { notifyPaymentCompleted } = require('./notificationService');
+  await notifyPaymentCompleted(booking);
   return booking;
 }
 
@@ -293,6 +305,9 @@ async function markFailed(orderId, reason) {
     { $set: { paymentStatus: 'FAILED', paymentFailureReason: payment.failureReason } }
   );
   logger.info('payment_failed', { bookingId: String(payment.booking), orderId });
+  const failedBooking = await Booking.findById(payment.booking).select('renter listing');
+  const { notifyPaymentFailed } = require('./notificationService');
+  await notifyPaymentFailed(failedBooking);
 }
 
 async function presentBooking(booking, viewerId) {

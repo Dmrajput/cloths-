@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../../constants/theme';
+import NotificationBell from '../notifications/NotificationBell';
 
 const { colors, typography, spacing } = THEME;
 
@@ -15,6 +16,7 @@ const AppHeader = ({
   onRightPress,
   showNotification = false,
   onNotificationPress,
+  notificationCount = 0,
   location,
   onLocationPress,
   style,
@@ -90,15 +92,7 @@ const AppHeader = ({
     return (
       <View style={[styles.side, styles.rightSide]}>
         {showNotification ? (
-          <Pressable
-            onPress={onNotificationPress}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-            hitSlop={8}
-            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          >
-            <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} />
-          </Pressable>
+          <NotificationBell count={notificationCount} onPress={onNotificationPress} />
         ) : null}
         {rightAction ? (
           <View style={showNotification ? styles.rightActionSpacing : null}>
